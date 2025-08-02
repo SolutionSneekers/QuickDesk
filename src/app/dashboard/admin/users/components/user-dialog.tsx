@@ -37,10 +37,13 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
   }, [user, isOpen]);
 
   const handleSubmit = () => {
+    // A real app would have proper validation here
     if (isEditing && user) {
         onSave({ ...user, name, email, role });
     } else {
-        onSave({ name, email, role, avatar: `https://i.pravatar.cc/150?u=${email}` });
+        // For new users, default the role to End User for security
+        // and create a placeholder avatar.
+        onSave({ name, email, role: 'End User', avatar: `https://placehold.co/150x150.png` });
     }
     setIsOpen(false);
   };
@@ -71,7 +74,7 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-             <Select value={role} onValueChange={(value) => setRole(value as any)}>
+             <Select value={role} onValueChange={(value) => setRole(value as any)} disabled={!isEditing}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>

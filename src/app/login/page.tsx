@@ -13,26 +13,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
-import { getUsers, User, getUserByEmail } from "@/lib/data";
-import { useEffect, useState } from "react";
+import { getUserByEmail } from "@/lib/data";
+import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('eve@quickdesk.com');
-  const [password, setPassword] = useState('password');
-  const [sampleUsers, setSampleUsers] = useState<User[]>([]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { setCurrentUser } = useCurrentUser();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Fetch a few users to display as examples on the login page
-    const fetchSampleUsers = async () => {
-      const users = await getUsers();
-      setSampleUsers(users.slice(0, 3));
-    };
-    fetchSampleUsers();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,11 +58,6 @@ export default function LoginPage() {
         });
     }
   };
-
-  const sampleAdmin = sampleUsers.find(u => u.role === 'Admin');
-  const sampleAgent = sampleUsers.find(u => u.role === 'Support Agent');
-  const sampleUser = sampleUsers.find(u => u.role === 'End User');
-
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
@@ -125,36 +110,6 @@ export default function LoginPage() {
               </Link>
             </div>
           </CardContent>
-        </Card>
-
-        <Card className="mt-4">
-            <CardHeader>
-                <CardTitle className="text-lg font-medium">Sample Users for Testing</CardTitle>
-                <CardDescription>The password for all users is `password`.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-                {sampleAdmin && (
-                    <div>
-                        <p className="font-semibold">Admin</p>
-                        <p className="text-muted-foreground">Email: {sampleAdmin.email}</p>
-                    </div>
-                )}
-                {sampleAgent && (
-                    <div>
-                        <p className="font-semibold">Support Agent</p>
-                        <p className="text-muted-foreground">Email: {sampleAgent.email}</p>
-                    </div>
-                )}
-                {sampleUser && (
-                    <div>
-                        <p className="font-semibold">End User</p>
-                        <p className="text-muted-foreground">Email: {sampleUser.email}</p>
-                    </div>
-                )}
-                 {sampleUsers.length === 0 && (
-                    <p className="text-muted-foreground">Loading sample users...</p>
-                 )}
-            </CardContent>
         </Card>
       </div>
     </div>
