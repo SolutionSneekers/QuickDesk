@@ -1,17 +1,39 @@
 
+'use client';
+
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { categories } from "@/lib/data";
+import { categories as initialCategories, Category } from "@/lib/data";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { CategoryDialog } from "./components/category-dialog";
+import { DeleteCategoryDialog } from "./components/delete-category-dialog";
 
 export default function AdminCategoriesPage() {
+    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+    const handleAddCategory = (category: Category) => {
+        setCategories(prev => [...prev, { ...category, id: `cat-${Date.now()}` }]);
+    };
+
+    const handleUpdateCategory = (category: Category) => {
+        setCategories(prev => prev.map(c => c.id === category.id ? category : c));
+    };
+
+    const handleDeleteCategory = (categoryId: string) => {
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+    };
+
     return (
         <div className="space-y-4">
              <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold font-headline">Category Management</h1>
-                 <Button size="sm" className="h-8 gap-1">
+                 <Button size="sm" className="h-8 gap-1" onClick={() => { setSelectedCategory(null); setIsCategoryDialogOpen(true); }}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Add Category
@@ -46,8 +68,13 @@ export default function AdminCategoriesPage() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => { setSelectedCategory(category); setIsCategoryDialogOpen(true); }}>
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedCategory(category); setIsDeleteDialogOpen(true); }}>
+                                                    Delete
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -57,6 +84,21 @@ export default function AdminCategoriesPage() {
                    </Table>
                 </CardContent>
             </Card>
+
+            <CategoryDialog
+                isOpen={isCategoryDialogOpen}
+                setIsOpen={setIsCategoryDialogOpen}
+                category={selectedCategory}
+                onSave={selectedCategory ? handleUpdateCategory : handleAddCategory}
+            />
+
+            <DeleteCategoryDialog
+                isOpen={isDeleteDialogOpen}
+                setIsOpen={setIsDeleteDialogOpen}
+                category={selectedCategory}
+                onDelete={handleDeleteCategory}
+            />
+
         </div>
     );
 }
