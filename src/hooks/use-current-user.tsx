@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
@@ -18,7 +19,10 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // In a real app, you'd fetch this from an auth session.
-    // For now, we'll get it from localStorage or default to the first admin.
+    // For this prototype, we get the current user from localStorage to persist the
+    // session across reloads. If no user is in localStorage, we default to the
+    // first user with the 'Admin' role from our mock data file. This simulates
+    // the initial, securely-created admin user that would exist in a production database.
     const storedUserId = localStorage.getItem("currentUser");
     const initialUser = users.find(u => u.id === storedUserId) || users.find(u => u.role === 'Admin');
     if (initialUser) {
