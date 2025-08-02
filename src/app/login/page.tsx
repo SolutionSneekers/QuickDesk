@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { setCurrentUser } = useCurrentUser();
   const { toast } = useToast();
 
@@ -28,24 +29,26 @@ export default function LoginPage() {
     // This is a temporary login flow for the prototype.
     // In a real app, you would use Firebase Authentication.
 
-    if (!email) {
+    if (!email || !password) {
         toast({
             variant: "destructive",
             title: "Login Failed",
-            description: "Please enter an email address.",
+            description: "Please enter both email and password.",
         });
         return;
     }
 
     try {
         const user = await getUserByEmail(email);
-        if (user) {
+        
+        // THIS IS INSECURE - FOR PROTOTYPE ONLY
+        if (user && (user as any).password === password) {
             setCurrentUser(user);
         } else {
              toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description: "No user found with that email address.",
+                description: "Invalid email or password.",
             });
         }
     } catch (error) {
@@ -70,7 +73,7 @@ export default function LoginPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
             <CardDescription>
-              Enter your email to sign into your account.
+              Enter your email and password to sign in.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -84,6 +87,16 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <Button type="submit" className="w-full">
