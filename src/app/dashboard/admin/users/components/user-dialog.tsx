@@ -21,15 +21,18 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'End User' | 'Support Agent' | 'Admin'>('End User');
 
+  const isEditing = !!user;
+
   useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
       setRole(user.role);
     } else {
+      // Reset form for new user
       setName('');
       setEmail('');
-      setRole('End User');
+      setRole('End User'); // Always default new users to End User
     }
   }, [user, isOpen]);
 
@@ -39,7 +42,7 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
       name,
       email,
       role,
-      avatar: user?.avatar || 'https://i.pravatar.cc/150?u=new-user'
+      avatar: user?.avatar || `https://i.pravatar.cc/150?u=${email}`
     };
     onSave(userData);
     setIsOpen(false);
@@ -49,9 +52,9 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{user ? 'Edit User' : 'Add New User'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
           <DialogDescription>
-            {user ? 'Update the details for this user.' : 'Enter the details for the new user.'}
+            {isEditing ? 'Update the details for this user.' : 'Enter the details for the new user.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -71,16 +74,20 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-            <Select value={role} onValueChange={(value) => setRole(value as any)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="End User">End User</SelectItem>
-                <SelectItem value="Support Agent">Support Agent</SelectItem>
-                <SelectItem value="Admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
+            {isEditing ? (
+              <Select value={role} onValueChange={(value) => setRole(value as any)}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="End User">End User</SelectItem>
+                  <SelectItem value="Support Agent">Support Agent</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id="role-display" value="End User" disabled className="col-span-3" />
+            )}
           </div>
         </div>
         <DialogFooter>
