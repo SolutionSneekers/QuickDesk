@@ -17,12 +17,15 @@ import * as admin from 'firebase-admin';
 import { collection, doc, writeBatch, getDocs, query, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../src/lib/firebase'; // This is the client-side DB for writing Firestore data
 import 'dotenv/config';
+import * as path from 'path';
 
 // --- Service Account Initialization ---
 // The script will automatically look for the GOOGLE_APPLICATION_CREDENTIALS env var.
 // If not found, it tries to use a local service account file.
 try {
-  const serviceAccount = require('../../serviceAccountKey.json');
+  // Correctly resolve the path to the project's root directory
+  const serviceAccountPath = path.resolve(__dirname, '../../serviceAccountKey.json');
+  const serviceAccount = require(serviceAccountPath);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
