@@ -45,7 +45,7 @@ export default function DashboardLayout({
             </div>
             <UserNav />
           </header>
-          <main className="p-4 sm:px-6 sm:py-0">{children}</main>
+          <main className="p-4 sm:px-6 sm:py-4">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>
