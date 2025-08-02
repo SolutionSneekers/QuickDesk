@@ -24,7 +24,7 @@ import * as path from 'path';
 // If not found, it tries to use a local service account file.
 try {
   // Correctly resolve the path to the project's root directory
-  const serviceAccountPath = path.resolve(__dirname, '../../serviceAccountKey.json');
+  const serviceAccountPath = path.join(process.cwd(), 'serviceAccountKey.json');
   const serviceAccount = require(serviceAccountPath);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
