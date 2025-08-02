@@ -21,12 +21,18 @@ import {
 import { Input } from '@/components/ui/input';
 import TicketList from '@/components/ticket-list';
 import { tickets, Ticket } from '@/lib/data';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 export default function AllTicketsPage() {
+  const { currentUser, isEndUser } = useCurrentUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<Ticket['status'] | 'All'>('All');
 
-  const filteredTickets = tickets
+  const ticketsToShow = isEndUser
+    ? tickets.filter(ticket => ticket.requester.id === currentUser?.id)
+    : tickets;
+
+  const filteredTickets = ticketsToShow
     .filter((ticket) => {
       if (statusFilter === 'All') return true;
       return ticket.status === statusFilter;
@@ -50,7 +56,9 @@ export default function AllTicketsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-headline">All Tickets</h1>
+        <h1 className="text-2xl font-bold font-headline">
+          {isEndUser ? 'My Tickets' : 'All Tickets'}
+        </h1>
         <Button size="sm" className="h-8 gap-1" asChild>
           <Link href="/dashboard/tickets/new">
             <PlusCircle className="h-3.5 w-3.5" />
@@ -66,7 +74,9 @@ export default function AllTicketsPage() {
            <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center">
             <div>
                  <CardTitle className="font-headline">Ticket Overview</CardTitle>
-                <CardDescription>A list of all tickets in the system.</CardDescription>
+                <CardDescription>
+                  {isEndUser ? 'A list of all tickets you have submitted.' : 'A list of all tickets in the system.'}
+                </CardDescription>
             </div>
             <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

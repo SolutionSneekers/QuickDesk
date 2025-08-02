@@ -16,16 +16,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import TicketStatusBadge from '@/components/ticket-status-badge';
-import { tickets } from '@/lib/data';
+import { tickets, users } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Activity, Clock, Star, Ticket } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 export default function DashboardPage() {
+  const { currentUser, isEndUser } = useCurrentUser();
+
   const recentTickets = [...tickets]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
+  
+  const userTickets = tickets.filter(ticket => ticket.requester.id === currentUser?.id);
 
   const ticketStatusData = tickets.reduce((acc, ticket) => {
     const status = ticket.status;
@@ -47,6 +52,60 @@ export default function DashboardPage() {
     ).length;
     return { name: day, tickets: count };
   }).reverse();
+
+  if (isEndUser) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold font-headline">My Tickets</h1>
+         <Card>
+          <CardHeader>
+            <CardTitle className="font-headline">Recent Tickets</CardTitle>
+            <CardDescription>
+              Here are the tickets you've submitted recently.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Subject</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Category
+                  </TableHead>
+                  <TableHead className="text-right">Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userTickets.length > 0 ? userTickets.map((ticket) => (
+                   <TableRow key={ticket.id}>
+                    <TableCell>
+                       <Link href={`/dashboard/tickets/${ticket.id}`} className="font-medium hover:underline">
+                        {ticket.subject}
+                      </Link>
+                    </TableCell>
+                     <TableCell className="hidden sm:table-cell">
+                      <TicketStatusBadge status={ticket.status} />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                        {ticket.category.name}
+                    </TableCell>
+                     <TableCell className="text-right">
+                       {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">You have not submitted any tickets.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
 
   return (
@@ -90,7 +149,7 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{users.filter(u => u.role !== 'End User').length}</div>
             <p className="text-xs text-muted-foreground">Agents online</p>
           </CardContent>
         </Card>

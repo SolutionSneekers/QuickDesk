@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,16 +9,32 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { users } from "@/lib/data";
 import Link from "next/link";
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, User, Settings, Check } from "lucide-react";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import React from "react";
 
 export function UserNav() {
-  // In a real app, you'd get the current user from session
-  const currentUser = users.find(user => user.role === 'Admin')!;
+  const { currentUser, setCurrentUser } = useCurrentUser();
+  const [selectedUser, setSelectedUser] = React.useState(currentUser?.id || 'admin-1');
+
+  if (!currentUser) {
+    return null;
+  }
+  
+  const handleUserChange = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if(user) {
+      setCurrentUser(user);
+      setSelectedUser(userId);
+    }
+  }
+
 
   return (
     <DropdownMenu>
@@ -52,6 +70,15 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+         <DropdownMenuLabel>Switch User</DropdownMenuLabel>
+         <DropdownMenuRadioGroup value={selectedUser} onValueChange={handleUserChange}>
+            {users.map(user => (
+              <DropdownMenuRadioItem key={user.id} value={user.id}>
+                {user.name} ({user.role})
+              </DropdownMenuRadioItem>
+            ))}
+         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/login">

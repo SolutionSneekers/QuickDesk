@@ -15,27 +15,33 @@ import {
   Tags,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { href: '/dashboard/tickets', label: 'All Tickets', icon: Ticket },
-  { href: '/dashboard/admin/users', label: 'Users', icon: Users, adminOnly: true },
-  { href: '/dashboard/admin/categories', label: 'Categories', icon: Tags, adminOnly: true },
-  { href: '/dashboard/profile', label: 'Profile', icon: Settings },
-];
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
-  // In a real app, you'd get this from user auth state
-  const userRole = 'Admin'; 
+  const { isEndUser, isAdmin } = useCurrentUser();
+
+  const menuItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid, roles: ['Admin', 'Support Agent', 'End User'] },
+    { href: '/dashboard/tickets', label: isEndUser ? 'My Tickets' : 'All Tickets', icon: Ticket, roles: ['Admin', 'Support Agent', 'End User'] },
+    { href: '/dashboard/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
+    { href: '/dashboard/admin/categories', label: 'Categories', icon: Tags, roles: ['Admin'] },
+    { href: '/dashboard/profile', label: 'Profile', icon: Settings, roles: ['Admin', 'Support Agent', 'End User'] },
+  ];
 
   return (
     <nav className={cn('flex flex-col', className)} {...props}>
       <SidebarMenu>
         {menuItems.map((item) => {
-          if (item.adminOnly && userRole !== 'Admin') {
+          let hasAccess = true;
+          if (item.roles.includes('Admin') && !isAdmin) hasAccess = false;
+          if (item.href.startsWith('/dashboard/admin') && !isAdmin) hasAccess = false;
+
+
+          if (!hasAccess) {
             return null;
           }
+          
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <SidebarMenuItem key={item.href}>
