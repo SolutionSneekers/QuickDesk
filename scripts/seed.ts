@@ -2,7 +2,7 @@
 // To run this script, use the following command from your project's root directory:
 // npx tsx ./scripts/seed.ts
 
-import { collection, addDoc, getDocs, writeBatch, query, where } from "firebase/firestore";
+import { collection, doc, addDoc, getDocs, writeBatch, query, where } from "firebase/firestore";
 import { db } from '../src/lib/firebase';
 import 'dotenv/config';
 
