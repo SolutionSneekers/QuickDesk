@@ -12,14 +12,14 @@ interface CategoryDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   category: Category | null;
-  onSave: (category: Category) => void;
+  onSave: (category: Omit<Category, 'id'> | Category) => void;
 }
 
 export function CategoryDialog({ isOpen, setIsOpen, category, onSave }: CategoryDialogProps) {
   const [name, setName] = useState('');
 
   useEffect(() => {
-    if (category) {
+    if (category && isOpen) {
       setName(category.name);
     } else {
       setName('');
@@ -27,11 +27,11 @@ export function CategoryDialog({ isOpen, setIsOpen, category, onSave }: Category
   }, [category, isOpen]);
 
   const handleSubmit = () => {
-    const categoryData: Category = {
-      id: category?.id || '',
-      name,
-    };
-    onSave(categoryData);
+    if (category) {
+        onSave({ ...category, name });
+    } else {
+        onSave({ name });
+    }
     setIsOpen(false);
   };
 

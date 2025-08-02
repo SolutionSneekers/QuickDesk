@@ -1,33 +1,80 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { categories as initialCategories, Category } from "@/lib/data";
+import { Category, getCategories, addCategory, updateCategory, deleteCategory } from "@/lib/data";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CategoryDialog } from "./components/category-dialog";
 import { DeleteCategoryDialog } from "./components/delete-category-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminCategoriesPage() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const { toast } = useToast();
 
-    const handleAddCategory = (category: Category) => {
-        setCategories(prev => [...prev, { ...category, id: `cat-${Date.now()}` }]);
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        setIsLoading(true);
+        try {
+            const fetchedCategories = await getCategories();
+            setCategories(fetchedCategories);
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch categories." });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleUpdateCategory = (category: Category) => {
-        setCategories(prev => prev.map(c => c.id === category.id ? category : c));
+    const handleAddCategory = async (category: Omit<Category, 'id'>) => {
+        try {
+            await addCategory(category);
+            fetchCategories(); // Re-fetch to get the new category with its ID
+            toast({ title: "Success", description: "Category added successfully." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not add category." });
+        }
     };
 
-    const handleDeleteCategory = (categoryId: string) => {
-        setCategories(prev => prev.filter(c => c.id !== categoryId));
+    const handleUpdateCategory = async (category: Category) => {
+        try {
+            await updateCategory(category.id, { name: category.name });
+            fetchCategories();
+            toast({ title: "Success", description: "Category updated successfully." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not update category." });
+        }
     };
+
+    const handleDeleteCategory = async (categoryId: string) => {
+        try {
+            await deleteCategory(categoryId);
+            fetchCategories();
+            toast({ title: "Success", description: "Category deleted successfully." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not delete category." });
+        }
+    };
+    
+    const handleSave = async (category: Category) => {
+        if(selectedCategory) {
+            await handleUpdateCategory({ ...category, id: selectedCategory.id });
+        } else {
+            await handleAddCategory({ name: category.name });
+        }
+    }
+
 
     return (
         <div className="space-y-4">
@@ -55,7 +102,15 @@ export default function AdminCategoriesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {categories.map(category => (
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : categories.map(category => (
                                 <TableRow key={category.id}>
                                     <TableCell className="font-medium">{category.name}</TableCell>
                                     <TableCell>0</TableCell>
@@ -89,7 +144,7 @@ export default function AdminCategoriesPage() {
                 isOpen={isCategoryDialogOpen}
                 setIsOpen={setIsCategoryDialogOpen}
                 category={selectedCategory}
-                onSave={selectedCategory ? handleUpdateCategory : handleAddCategory}
+                onSave={handleSave}
             />
 
             <DeleteCategoryDialog

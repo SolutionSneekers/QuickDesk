@@ -1,3 +1,6 @@
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { db } from './firebase'; // Assuming db is exported from your firebase setup
+
 export type User = {
   id: string;
   name: string;
@@ -34,6 +37,33 @@ export type Ticket = {
   comments: Comment[];
 };
 
+// --- Firestore Service for Categories ---
+
+const categoryCollection = collection(db, 'categories');
+
+export const getCategories = async (): Promise<Category[]> => {
+    const snapshot = await getDocs(categoryCollection);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+};
+
+export const addCategory = async (category: Omit<Category, 'id'>): Promise<Category> => {
+    const docRef = await addDoc(categoryCollection, category);
+    return { id: docRef.id, ...category };
+};
+
+export const updateCategory = async (id: string, category: Partial<Category>): Promise<void> => {
+    const categoryDoc = doc(db, 'categories', id);
+    await updateDoc(categoryDoc, category);
+};
+
+export const deleteCategory = async (id: string): Promise<void> => {
+    const categoryDoc = doc(db, 'categories', id);
+    await deleteDoc(categoryDoc);
+};
+
+
+// --- Mock Data (to be replaced) ---
+
 export const users: User[] = [
   { id: 'user-1', name: 'Alice Johnson', email: 'alice@example.com', avatar: 'https://i.pravatar.cc/150?u=user-1', role: 'End User' },
   { id: 'user-2', name: 'Bob Williams', email: 'bob@example.com', avatar: 'https://i.pravatar.cc/150?u=user-2', role: 'End User' },
@@ -44,7 +74,7 @@ export const users: User[] = [
   { id: 'admin-1', name: 'Eve Adams', email: 'eve@quickdesk.com', avatar: 'https://i.pravatar.cc/150?u=admin-1', role: 'Admin' },
 ];
 
-export const categories: Category[] = [
+export const initialCategories: Category[] = [
   { id: 'cat-1', name: 'Billing' },
   { id: 'cat-2', name: 'Technical Support' },
   { id: 'cat-3', name: 'General Inquiry' },
@@ -58,7 +88,7 @@ export const tickets: Ticket[] = [
     subject: 'Cannot login to my account',
     description: 'I am trying to login with my credentials but it keeps saying "Invalid password". I have tried resetting it multiple times.',
     status: 'In Progress',
-    category: categories[4],
+    category: initialCategories[4],
     requester: users[0],
     assignee: users[4],
     createdAt: '2024-07-29T10:00:00Z',
@@ -75,7 +105,7 @@ export const tickets: Ticket[] = [
     subject: 'Question about my recent invoice',
     description: 'I was charged twice for my subscription this month. Can you please look into it and issue a refund?',
     status: 'Open',
-    category: categories[0],
+    category: initialCategories[0],
     requester: users[1],
     assignee: users[5],
     createdAt: '2024-07-28T14:00:00Z',
@@ -89,7 +119,7 @@ export const tickets: Ticket[] = [
     subject: 'Website is loading very slowly',
     description: 'For the past few days, the main dashboard has been extremely slow to load. All other websites are working fine.',
     status: 'Resolved',
-    category: categories[1],
+    category: initialCategories[1],
     requester: users[2],
     assignee: users[5],
     createdAt: '2024-07-26T09:00:00Z',
@@ -105,7 +135,7 @@ export const tickets: Ticket[] = [
     subject: 'Can we get an integration with Slack?',
     description: 'Our team heavily uses Slack and it would be a game-changer if we could get notifications and create tickets from Slack.',
     status: 'Closed',
-    category: categories[3],
+    category: initialCategories[3],
     requester: users[3],
     assignee: users[4],
     createdAt: '2024-07-25T16:00:00Z',
@@ -121,7 +151,7 @@ export const tickets: Ticket[] = [
     subject: 'How do I update my payment method?',
     description: 'I need to change the credit card on file for my account, but I can\'t find where to do it.',
     status: 'Open',
-    category: categories[0],
+    category: initialCategories[0],
     requester: users[0],
     createdAt: '2024-07-29T15:00:00Z',
     updatedAt: '2024-07-29T15:00:00Z',
@@ -134,7 +164,7 @@ export const tickets: Ticket[] = [
     subject: 'API documentation is unclear',
     description: 'I\'m trying to use the API to create tickets, but the documentation for the /api/tickets endpoint is confusing.',
     status: 'In Progress',
-    category: categories[1],
+    category: initialCategories[1],
     requester: users[1],
     assignee: users[5],
     createdAt: '2024-07-29T13:00:00Z',
@@ -150,7 +180,7 @@ export const tickets: Ticket[] = [
     subject: 'Password reset link not working',
     description: 'I requested a password reset, but when I click the link in the email, it says "Invalid or expired token".',
     status: 'Resolved',
-    category: categories[4],
+    category: initialCategories[4],
     requester: users[2],
     assignee: users[4],
     createdAt: '2024-07-28T11:00:00Z',
