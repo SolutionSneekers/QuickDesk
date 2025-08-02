@@ -75,7 +75,7 @@ export default function LoginPage() {
         <Card className="mt-4">
             <CardHeader>
                 <CardTitle className="text-lg font-medium">Sample Users for Testing</CardTitle>
-                <CardDescription>Use the user switcher in the dashboard header to change roles.</CardDescription>
+                <CardDescription>Use the user switcher in the dashboard header to change roles. The password for all users is `password`.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
                 {sampleAdmin && (
