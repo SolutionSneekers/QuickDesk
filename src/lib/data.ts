@@ -1,3 +1,4 @@
+
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from './firebase'; // Assuming db is exported from your firebase setup
 
@@ -43,6 +44,11 @@ const categoryCollection = collection(db, 'categories');
 
 export const getCategories = async (): Promise<Category[]> => {
     const snapshot = await getDocs(categoryCollection);
+    // Make sure you have created the 'categories' collection in your Firestore database
+    if (snapshot.empty) {
+        console.warn("No categories found in Firestore. Please add some to the 'categories' collection.");
+        return [];
+    }
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
 };
 
@@ -51,7 +57,7 @@ export const addCategory = async (category: Omit<Category, 'id'>): Promise<Categ
     return { id: docRef.id, ...category };
 };
 
-export const updateCategory = async (id: string, category: Partial<Category>): Promise<void> => {
+export const updateCategory = async (id: string, category: Partial<Omit<Category, 'id'>>): Promise<void> => {
     const categoryDoc = doc(db, 'categories', id);
     await updateDoc(categoryDoc, category);
 };
@@ -74,7 +80,7 @@ export const users: User[] = [
   { id: 'admin-1', name: 'Eve Adams', email: 'eve@quickdesk.com', avatar: 'https://i.pravatar.cc/150?u=admin-1', role: 'Admin' },
 ];
 
-export const initialCategories: Category[] = [
+const mockCategories: Category[] = [
   { id: 'cat-1', name: 'Billing' },
   { id: 'cat-2', name: 'Technical Support' },
   { id: 'cat-3', name: 'General Inquiry' },
@@ -88,7 +94,7 @@ export const tickets: Ticket[] = [
     subject: 'Cannot login to my account',
     description: 'I am trying to login with my credentials but it keeps saying "Invalid password". I have tried resetting it multiple times.',
     status: 'In Progress',
-    category: initialCategories[4],
+    category: mockCategories[4],
     requester: users[0],
     assignee: users[4],
     createdAt: '2024-07-29T10:00:00Z',
@@ -105,7 +111,7 @@ export const tickets: Ticket[] = [
     subject: 'Question about my recent invoice',
     description: 'I was charged twice for my subscription this month. Can you please look into it and issue a refund?',
     status: 'Open',
-    category: initialCategories[0],
+    category: mockCategories[0],
     requester: users[1],
     assignee: users[5],
     createdAt: '2024-07-28T14:00:00Z',
@@ -119,7 +125,7 @@ export const tickets: Ticket[] = [
     subject: 'Website is loading very slowly',
     description: 'For the past few days, the main dashboard has been extremely slow to load. All other websites are working fine.',
     status: 'Resolved',
-    category: initialCategories[1],
+    category: mockCategories[1],
     requester: users[2],
     assignee: users[5],
     createdAt: '2024-07-26T09:00:00Z',
@@ -135,7 +141,7 @@ export const tickets: Ticket[] = [
     subject: 'Can we get an integration with Slack?',
     description: 'Our team heavily uses Slack and it would be a game-changer if we could get notifications and create tickets from Slack.',
     status: 'Closed',
-    category: initialCategories[3],
+    category: mockCategories[3],
     requester: users[3],
     assignee: users[4],
     createdAt: '2024-07-25T16:00:00Z',
@@ -151,7 +157,7 @@ export const tickets: Ticket[] = [
     subject: 'How do I update my payment method?',
     description: 'I need to change the credit card on file for my account, but I can\'t find where to do it.',
     status: 'Open',
-    category: initialCategories[0],
+    category: mockCategories[0],
     requester: users[0],
     createdAt: '2024-07-29T15:00:00Z',
     updatedAt: '2024-07-29T15:00:00Z',
@@ -164,7 +170,7 @@ export const tickets: Ticket[] = [
     subject: 'API documentation is unclear',
     description: 'I\'m trying to use the API to create tickets, but the documentation for the /api/tickets endpoint is confusing.',
     status: 'In Progress',
-    category: initialCategories[1],
+    category: mockCategories[1],
     requester: users[1],
     assignee: users[5],
     createdAt: '2024-07-29T13:00:00Z',
@@ -180,7 +186,7 @@ export const tickets: Ticket[] = [
     subject: 'Password reset link not working',
     description: 'I requested a password reset, but when I click the link in the email, it says "Invalid or expired token".',
     status: 'Resolved',
-    category: initialCategories[4],
+    category: mockCategories[4],
     requester: users[2],
     assignee: users[4],
     createdAt: '2024-07-28T11:00:00Z',

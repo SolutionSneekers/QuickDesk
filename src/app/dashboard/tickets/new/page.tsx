@@ -1,3 +1,5 @@
+
+'use client';
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +20,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categories } from "@/lib/data";
+import { getCategories, Category } from "@/lib/data";
+import { useEffect, useState } from "react";
 
 export default function NewTicketPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+        const fetchedCategories = await getCategories();
+        setCategories(fetchedCategories);
+    }
+    fetchCategories();
+  }, [])
+
+
   return (
     <div>
         <div className="flex items-center gap-4 mb-4">
