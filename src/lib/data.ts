@@ -46,7 +46,7 @@ export const getCategories = async (): Promise<Category[]> => {
     const snapshot = await getDocs(categoryCollection);
     // Make sure you have created the 'categories' collection in your Firestore database
     if (snapshot.empty) {
-        console.warn("No categories found in Firestore. Please add some to the 'categories' collection.");
+        console.warn("No categories found in Firestore. Please add some to the 'categories' collection or run the seeding script.");
         return [];
     }
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
