@@ -13,21 +13,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
-import { getUserByEmail } from "@/lib/data";
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import { useToast } from "@/hooks/use-toast";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { app } from "@/lib/firebase";
+
+const auth = getAuth(app);
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { setCurrentUser } = useCurrentUser();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a temporary login flow for the prototype.
-    // In a real app, you would use Firebase Authentication.
+    setIsLoading(true);
 
     if (!email || !password) {
         toast({
@@ -35,29 +38,27 @@ export default function LoginPage() {
             title: "Login Failed",
             description: "Please enter both email and password.",
         });
+        setIsLoading(false);
         return;
     }
 
     try {
-        const user = await getUserByEmail(email);
-        
-        // THIS IS INSECURE - FOR PROTOTYPE ONLY
-        if (user && (user as any).password === password) {
-            setCurrentUser(user);
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Login Failed",
-                description: "Invalid email or password.",
-            });
-        }
-    } catch (error) {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // The useCurrentUser hook will handle the redirect and setting the user context
+        // because it listens to onAuthStateChanged.
+    } catch (error: any) {
         console.error("Login error:", error);
+        let description = "An unknown error occurred.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            description = "Invalid email or password. Please try again.";
+        }
         toast({
             variant: "destructive",
-            title: "Login Error",
-            description: "An error occurred while trying to log in.",
+            title: "Login Failed",
+            description: description,
         });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -87,6 +88,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
                <div className="grid gap-2">
@@ -97,10 +99,11 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Signing In...' : 'Sign in'}
               </Button>
             </form>
             <div className="mt-4 text-center text-sm">

@@ -16,9 +16,20 @@ import Link from "next/link";
 import { LogOut, User, Settings } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import React from "react";
+import { getAuth, signOut } from "firebase/auth";
 
 export function UserNav() {
   const { currentUser, setCurrentUser } = useCurrentUser();
+
+  const handleLogout = () => {
+    const auth = getAuth();
+    signOut(auth).then(() => {
+        // The useCurrentUser hook will handle cleanup and redirect
+        console.log('User signed out');
+    }).catch((error) => {
+        console.error('Sign out error', error);
+    });
+  }
 
   if (!currentUser) {
     return (
@@ -75,7 +86,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setCurrentUser(null)}>
+        <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
         </DropdownMenuItem>

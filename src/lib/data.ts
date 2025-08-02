@@ -1,5 +1,6 @@
 
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, getDoc, Timestamp, writeBatch } from "firebase/firestore";
+
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, getDoc, Timestamp, writeBatch, setDoc } from "firebase/firestore";
 import { db } from './firebase';
 
 // --- Data Types ---
@@ -48,23 +49,6 @@ const categoryCollection = collection(db, 'categories');
 const ticketCollection = collection(db, 'tickets');
 
 
-// --- Helper to enrich documents ---
-
-// Enriches a single document with related data
-async function enrichDocument(docData: any, fields: Array<{ fieldName: string, collection: any, targetField: string }>) {
-    const enrichedData = { ...docData };
-    for (const { fieldName, collection, targetField } of fields) {
-        if (docData[fieldName]) {
-            const relatedDoc = await getDoc(doc(db, collection, docData[fieldName]));
-            if (relatedDoc.exists()) {
-                enrichedData[targetField] = { id: relatedDoc.id, ...relatedDoc.data() };
-            }
-        }
-    }
-    return enrichedData;
-}
-
-
 // --- User Service ---
 
 export const getUsers = async (): Promise<User[]> => {
@@ -74,6 +58,7 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {
+    // The user document ID in Firestore is now the same as the Firebase Auth UID
     const userDocRef = doc(db, 'users', id);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists()) return null;
@@ -91,9 +76,10 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 };
 
 
-export const addUser = async (user: Omit<User, 'id'>): Promise<User> => {
-    const docRef = await addDoc(userCollection, user);
-    return { id: docRef.id, ...user };
+export const addUser = async (id: string, user: Omit<User, 'id'>): Promise<User> => {
+    const userDocRef = doc(db, 'users', id);
+    await setDoc(userDocRef, user);
+    return { id: id, ...user };
 };
 
 export const updateUser = async (id: string, user: Partial<Omit<User, 'id'>>): Promise<void> => {
@@ -102,6 +88,8 @@ export const updateUser = async (id: string, user: Partial<Omit<User, 'id'>>): P
 };
 
 export const deleteUser = async (id: string): Promise<void> => {
+    // Note: This only deletes the Firestore user document.
+    // The corresponding Firebase Auth user must be deleted separately using the Admin SDK.
     const userDoc = doc(db, 'users', id);
     await deleteDoc(userDoc);
 };
@@ -218,31 +206,4 @@ export const addCommentToTicket = async (ticketId: string, commentData: Omit<Com
         comments: updatedComments,
         updatedAt: new Date().toISOString(),
     });
-};
-
-export const seedDatabase = async (users: Omit<User, 'id'>[], tickets: Omit<Ticket, 'id'>[], categories: Omit<Category, 'id'>[]) => {
-    const batch = writeBatch(db);
-
-    // Seed Users
-    users.forEach(user => {
-        const docRef = doc(userCollection); // Auto-generate ID
-        batch.set(docRef, user);
-    });
-
-    // Seed Categories
-    categories.forEach(category => {
-        const docRef = doc(categoryCollection); // Auto-generate ID
-        batch.set(docRef, category);
-    });
-    
-    // Seed Tickets - Note: This requires users and categories to be created first
-    // In a real script, you'd get the IDs back before seeding tickets.
-    // For this prototype, we'll keep it simple and assume they exist or link later.
-    tickets.forEach(ticket => {
-        const docRef = doc(ticketCollection); // Auto-generate ID
-        batch.set(docRef, ticket);
-    });
-
-    await batch.commit();
-    console.log("Database seeded successfully!");
 };

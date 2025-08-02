@@ -2,13 +2,16 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { getUserById, User } from "@/lib/data";
-import { useRouter } from 'next/navigation';
+import { getUserById, User as FirestoreUser } from "@/lib/data";
+import { useRouter, usePathname } from 'next/navigation';
+import { getAuth, onAuthStateChanged, User as AuthUser } from "firebase/auth";
+import { app } from "@/lib/firebase";
 
+type AppUser = FirestoreUser; // We are using the Firestore user model as our main user object
 
 type CurrentUserContextType = {
-  currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
+  currentUser: AppUser | null;
+  setCurrentUser: (user: AppUser | null) => void; // This is now mostly for manual override/logout
   isAdmin: boolean;
   isAgent: boolean;
   isEndUser: boolean;
@@ -18,42 +21,56 @@ type CurrentUserContextType = {
 const CurrentUserContext = createContext<CurrentUserContextType | undefined>(undefined);
 
 export function CurrentUserProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const router = useRouter();
-
+  const pathname = usePathname();
 
   useEffect(() => {
-    const fetchUser = async () => {
-        setIsLoading(true);
-        const storedUserId = localStorage.getItem("currentUser");
-        if (storedUserId) {
-            try {
-                // In a real app, you'd also verify the user's session/token with a backend.
-                const user = await getUserById(storedUserId);
-                setCurrentUser(user);
-            } catch (error) {
-                console.error("Failed to fetch user:", error);
-                localStorage.removeItem("currentUser"); // Clear invalid stored user
-                setCurrentUser(null);
+    const auth = getAuth(app);
+    
+    const unsubscribe = onAuthStateChanged(auth, async (authUser: AuthUser | null) => {
+      if (authUser) {
+        // User is signed in, now get the profile from Firestore.
+        try {
+          const firestoreUser = await getUserById(authUser.uid);
+          if (firestoreUser) {
+            setCurrentUser(firestoreUser);
+            // Redirect from login page if user is already logged in
+            if(pathname === '/login') {
+              router.push('/dashboard');
             }
-        } else {
+          } else {
+            // This case might happen if the user exists in Auth but not Firestore.
+            // For this app's logic, we sign them out.
+            await auth.signOut();
             setCurrentUser(null);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile from Firestore:", error);
+          await auth.signOut();
+          setCurrentUser(null);
         }
-        setIsLoading(false);
-    }
-    fetchUser();
-  }, []);
-
-  const handleSetCurrentUser = (user: User | null) => {
-    if (user) {
-        setCurrentUser(user);
-        localStorage.setItem("currentUser", user.id);
-        router.push('/dashboard');
-    } else {
+      } else {
+        // User is signed out.
         setCurrentUser(null);
-        localStorage.removeItem("currentUser");
-        router.push('/login');
+        if (pathname.startsWith('/dashboard')) {
+            router.push('/login');
+        }
+      }
+      setIsLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router, pathname]);
+
+
+  const handleSetCurrentUser = (user: AppUser | null) => {
+    // This function is now mainly for explicit logout.
+    if (user === null) {
+        const auth = getAuth(app);
+        auth.signOut(); // This will trigger the onAuthStateChanged listener
     }
   };
 
@@ -63,7 +80,7 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
 
   return (
     <CurrentUserContext.Provider value={{ currentUser, setCurrentUser: handleSetCurrentUser, isAdmin, isAgent, isEndUser, isLoading }}>
-      {children}
+      {isLoading ? <div>Loading...</div> : children}
     </CurrentUserContext.Provider>
   );
 }

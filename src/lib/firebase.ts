@@ -1,7 +1,9 @@
+
 // This file is for your Firebase configuration.
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // TODO: Replace the following with your app's Firebase project configuration.
 // You can get this from the Firebase console.
@@ -18,5 +20,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { app, db };
+
+export { app, db, auth };
