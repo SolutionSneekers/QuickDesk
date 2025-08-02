@@ -5,12 +5,12 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 // TODO: Replace the following with your app's Firebase project configuration.
 // You can get this from the Firebase console.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAdP--Dtad2S1ZWiF5NmaKPZOAgCJD9zQk",
+  authDomain: "quickdesk-1c68b.firebaseapp.com",
+  projectId: "quickdesk-1c68b",
+  storageBucket: "quickdesk-1c68b.firebasestorage.app",
+  messagingSenderId: "1022743363302",
+  appId: "1:1022743363302:web:0f0703605e9d98ca350527"
 };
 
 // Initialize Firebase
