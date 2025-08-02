@@ -55,67 +55,7 @@ const usersToSeed = [
     role: 'Admin', 
     password: 'admin123456789',
     avatar: 'https://placehold.co/150x150/7F56D9/FFFFFF/png'
-  },
-  { 
-    name: 'Alice Johnson', 
-    email: 'alice@example.com', 
-    role: 'Support Agent', 
-    password: 'password123',
-    avatar: 'https://placehold.co/150x150/F97316/FFFFFF/png'
-  },
-  { 
-    name: 'Bob Williams', 
-    email: 'bob@example.com', 
-    role: 'Support Agent', 
-    password: 'password123',
-    avatar: 'https://placehold.co/150x150/10B981/FFFFFF/png'
-  },
-  {
-    name: 'Charlie Brown',
-    email: 'charlie@example.com',
-    role: 'End User',
-    password: 'password123',
-    avatar: 'https://placehold.co/150x150/3B82F6/FFFFFF/png'
-  },
-   {
-    name: 'Diana Miller',
-    email: 'diana@example.com',
-    role: 'End User',
-    password: 'password123',
-    avatar: 'https://placehold.co/150x150/EC4899/FFFFFF/png'
   }
-];
-
-const ticketsToSeed = (userIds: { [email: string]: string }) => [
-  {
-    subject: "Cannot reset my password",
-    description: "I've tried the 'Forgot Password' link multiple times but I'm not receiving an email. Please help me reset my password.",
-    status: "Open",
-    categoryName: 'Account Access',
-    requesterEmail: 'charlie@example.com',
-    assigneeEmail: 'alice@example.com',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    upvotes: 5,
-    downvotes: 0,
-    comments: [
-      { authorEmail: 'charlie@example.com', content: "I'm still waiting for a response on this. It's been two days.", createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), isAgent: false },
-      { authorEmail: 'alice@example.com', content: "Hi Charlie, apologies for the delay. I'm looking into this for you now and will send a manual reset link shortly.", createdAt: new Date().toISOString(), isAgent: true }
-    ]
-  },
-  {
-    subject: "Question about latest invoice",
-    description: "I was charged twice this month. Can you please look into this and issue a refund for the duplicate charge?",
-    status: "In Progress",
-    categoryName: 'Billing',
-    requesterEmail: 'diana@example.com',
-    assigneeEmail: 'bob@example.com',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    upvotes: 2,
-    downvotes: 0,
-    comments: []
-  },
 ];
 
 
@@ -142,15 +82,9 @@ async function seedDatabase() {
   });
   await categoriesBatch.commit();
   
-  // Fetch all categories to create a name-to-ID map
-  const allCategoriesSnap = await getDocs(categoriesCollection);
-  const categoryNameToIdMap = new Map(allCategoriesSnap.docs.map(d => [d.data().name, d.id]));
-
-
   // 2. Seed Users
   console.log("\nSyncing Users (Auth and Firestore)...");
-  const userEmailToIdMap = new Map<string, string>();
-
+  
   for (const user of usersToSeed) {
     try {
       let userRecord;
@@ -190,57 +124,25 @@ async function seedDatabase() {
       } else {
          console.log(`  = Firestore user document already exists for: ${user.email}`);
       }
-      userEmailToIdMap.set(user.email, userRecord.uid);
     } catch (error) {
       console.error(`  ! Error processing user ${user.email}:`, error);
     }
   }
 
-
-  // 3. Seed Tickets
-  console.log("\nSyncing Tickets...");
+  // 3. Clear Tickets (if any existed from previous seeds)
+  console.log("\nChecking for old tickets...");
   const ticketsCollection = collection(db, 'tickets');
   const existingTicketsSnap = await getDocs(query(ticketsCollection));
-  if (existingTicketsSnap.empty) {
-    console.log("  - Tickets collection is empty, proceeding with seed.");
-    const ticketsBatch = writeBatch(db);
-    const ticketData = ticketsToSeed(Object.fromEntries(userEmailToIdMap));
-
-    ticketData.forEach(ticket => {
-        const docRef = doc(ticketsCollection);
-        const requesterId = userEmailToIdMap.get(ticket.requesterEmail);
-        const assigneeId = userEmailToIdMap.get(ticket.assigneeEmail);
-        const categoryId = categoryNameToIdMap.get(ticket.categoryName);
-
-        if (!requesterId || !categoryId) {
-            console.error(`  ! Skipping ticket "${ticket.subject}" due to missing requester or category.`);
-            return;
-        }
-
-        const comments = ticket.comments.map(c => ({
-            ...c,
-            authorId: userEmailToIdMap.get(c.authorEmail)
-        })).filter(c => c.authorId);
-
-        const newTicket = {
-            subject: ticket.subject,
-            description: ticket.description,
-            status: ticket.status,
-            createdAt: ticket.createdAt,
-            updatedAt: ticket.updatedAt,
-            upvotes: ticket.upvotes,
-            downvotes: ticket.downvotes,
-            requesterId,
-            assigneeId: assigneeId || null,
-            categoryId,
-            comments: comments.map(({authorEmail, ...rest}) => rest), // remove authorEmail
-        };
-        ticketsBatch.set(docRef, newTicket);
-        console.log(`  + Adding ticket: "${ticket.subject}"`);
-    });
-    await ticketsBatch.commit();
+  if (!existingTicketsSnap.empty) {
+      console.log(`  - Found ${existingTicketsSnap.size} old tickets. Deleting...`);
+      const deleteBatch = writeBatch(db);
+      existingTicketsSnap.docs.forEach(ticketDoc => {
+          deleteBatch.delete(ticketDoc.ref);
+      });
+      await deleteBatch.commit();
+      console.log("  - Old tickets deleted.");
   } else {
-     console.log("  = Tickets collection already has data. Skipping seed.");
+      console.log("  = No old tickets found to delete.");
   }
 
 
