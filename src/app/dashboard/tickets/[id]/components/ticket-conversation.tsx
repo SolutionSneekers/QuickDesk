@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -14,13 +15,14 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown, Send } from "lucide-react";
 import AIReplySuggester from "./ai-reply-suggester";
 
-function Comment({ comment }: { comment: CommentType }) {
+function Comment({ comment }: { comment: any }) {
+  const author = comment.author; // Author is now enriched
   return (
     <div className={cn("flex items-start gap-4", { "justify-end": comment.isAgent })}>
-      {!comment.isAgent && (
+      {!comment.isAgent && author && (
         <Avatar className="h-8 w-8">
-          <AvatarImage src={comment.author.avatar} />
-          <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={author.avatar} />
+          <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
         </Avatar>
       )}
       <div className={cn("max-w-xs md:max-w-md lg:max-w-lg", { "text-right": comment.isAgent })}>
@@ -28,20 +30,20 @@ function Comment({ comment }: { comment: CommentType }) {
           <p className="text-sm">{comment.content}</p>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          {comment.author.name} • {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
+          {author ? author.name : '...'} • {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
         </p>
       </div>
-       {comment.isAgent && (
+       {comment.isAgent && author && (
         <Avatar className="h-8 w-8">
-          <AvatarImage src={comment.author.avatar} />
-          <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={author.avatar} />
+          <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
         </Avatar>
       )}
     </div>
   );
 }
 
-export default function TicketConversation({ ticket, isAgent }: { ticket: Ticket; isAgent: boolean }) {
+export default function TicketConversation({ ticket, isAgent }: { ticket: any; isAgent: boolean }) {
   return (
     <Card>
       <CardHeader>
@@ -60,10 +62,10 @@ export default function TicketConversation({ ticket, isAgent }: { ticket: Ticket
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {ticket.comments.map((comment) => (
+        {ticket.comments && ticket.comments.map((comment: any) => (
           <Comment key={comment.id} comment={comment} />
         ))}
-        {ticket.comments.length === 0 && (
+        {(!ticket.comments || ticket.comments.length === 0) && (
           <div className="text-center text-muted-foreground py-8">
             No comments yet.
           </div>

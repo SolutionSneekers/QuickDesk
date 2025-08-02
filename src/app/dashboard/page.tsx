@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,21 +17,44 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import TicketStatusBadge from '@/components/ticket-status-badge';
-import { tickets, users } from '@/lib/data';
+import { getTickets, getUsers, Ticket, User } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Activity, Clock, Star, Ticket } from 'lucide-react';
+import { Activity, Clock, Star, Ticket as TicketIcon } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/use-current-user.tsx';
+import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
-  const { currentUser, isEndUser } = useCurrentUser();
+  const { currentUser, isEndUser, isLoading: isUserLoading } = useCurrentUser();
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+  useEffect(() => {
+    if(!isUserLoading) {
+        const fetchData = async () => {
+            setIsLoading(true);
+            const [fetchedTickets, fetchedUsers] = await Promise.all([getTickets(), getUsers()]);
+            setTickets(fetchedTickets);
+            setUsers(fetchedUsers);
+            setIsLoading(false);
+        }
+        fetchData();
+    }
+  }, [isUserLoading])
+
+  if (isLoading || isUserLoading) {
+    return <div>Loading...</div>
+  }
+
 
   const recentTickets = [...tickets]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
   
-  const userTickets = tickets.filter(ticket => ticket.requester.id === currentUser?.id);
+  const userTickets = tickets.filter(ticket => ticket.requesterId === currentUser?.id);
 
   const ticketStatusData = tickets.reduce((acc, ticket) => {
     const status = ticket.status;
@@ -88,7 +112,7 @@ export default function DashboardPage() {
                       <TicketStatusBadge status={ticket.status} />
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                        {ticket.category.name}
+                        {ticket.category?.name || 'N/A'}
                     </TableCell>
                      <TableCell className="text-right">
                        {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
@@ -116,7 +140,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
-            <Ticket className="h-4 w-4 text-muted-foreground" />
+            <TicketIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tickets.length}</div>
@@ -227,6 +251,11 @@ export default function DashboardPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {tickets.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center">No recent activity.</TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

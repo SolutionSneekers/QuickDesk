@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Ticket } from "@/lib/data";
@@ -5,7 +6,7 @@ import TicketStatusBadge from "./ticket-status-badge";
 import { formatDistanceToNow } from "date-fns";
 
 interface TicketListItemProps {
-  ticket: Ticket;
+  ticket: any; // Enriched ticket
 }
 
 export default function TicketListItem({ ticket }: TicketListItemProps) {
@@ -26,10 +27,10 @@ export default function TicketListItem({ ticket }: TicketListItemProps) {
         <TicketStatusBadge status={ticket.status} />
       </TableCell>
       <TableCell className="hidden sm:table-cell">
-        {ticket.category.name}
+        {ticket.category?.name || 'N/A'}
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        {ticket.requester.name}
+        {ticket.requester?.name || 'N/A'}
       </TableCell>
       <TableCell className="text-right">
         {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}

@@ -13,7 +13,7 @@ interface UserDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   user: User | null;
-  onSave: (user: User) => void;
+  onSave: (user: Omit<User, 'id'> | User) => void;
 }
 
 export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps) {
@@ -24,7 +24,7 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
   const isEditing = !!user;
 
   useEffect(() => {
-    if (user) {
+    if (user && isOpen) {
       setName(user.name);
       setEmail(user.email);
       setRole(user.role);
@@ -32,19 +32,16 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
       // Reset form for new user
       setName('');
       setEmail('');
-      setRole('End User'); // Always default new users to End User
+      setRole('End User');
     }
   }, [user, isOpen]);
 
   const handleSubmit = () => {
-    const userData: User = {
-      id: user?.id || '',
-      name,
-      email,
-      role,
-      avatar: user?.avatar || `https://i.pravatar.cc/150?u=${email}`
-    };
-    onSave(userData);
+    if (isEditing && user) {
+        onSave({ ...user, name, email, role });
+    } else {
+        onSave({ name, email, role, avatar: `https://i.pravatar.cc/150?u=${email}` });
+    }
     setIsOpen(false);
   };
 
@@ -74,8 +71,7 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-            {isEditing ? (
-              <Select value={role} onValueChange={(value) => setRole(value as any)}>
+             <Select value={role} onValueChange={(value) => setRole(value as any)}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -85,9 +81,6 @@ export function UserDialog({ isOpen, setIsOpen, user, onSave }: UserDialogProps)
                   <SelectItem value="Admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
-            ) : (
-              <Input id="role-display" value="End User" disabled className="col-span-3" />
-            )}
           </div>
         </div>
         <DialogFooter>

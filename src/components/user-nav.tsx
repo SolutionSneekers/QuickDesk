@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,32 +11,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { users } from "@/lib/data";
 import Link from "next/link";
-import { LogOut, User, Settings, Check } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import React from "react";
 
 export function UserNav() {
   const { currentUser, setCurrentUser } = useCurrentUser();
-  const [selectedUser, setSelectedUser] = React.useState(currentUser?.id || 'admin-1');
 
   if (!currentUser) {
-    return null;
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-9 w-9"></Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem asChild>
+                    <Link href="/login">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log in</span>
+                    </Link>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
   }
   
-  const handleUserChange = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if(user) {
-      setCurrentUser(user);
-      setSelectedUser(userId);
-    }
-  }
-
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -71,20 +75,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-         <DropdownMenuLabel>Switch User</DropdownMenuLabel>
-         <DropdownMenuRadioGroup value={selectedUser} onValueChange={handleUserChange}>
-            {users.map(user => (
-              <DropdownMenuRadioItem key={user.id} value={user.id}>
-                {user.name} ({user.role})
-              </DropdownMenuRadioItem>
-            ))}
-         </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/login">
+        <DropdownMenuItem onClick={() => setCurrentUser(null)}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
-          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

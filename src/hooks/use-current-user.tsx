@@ -2,39 +2,59 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { users, User } from "@/lib/data";
+import { getUserById, User } from "@/lib/data";
+import { useRouter } from 'next/navigation';
+
 
 type CurrentUserContextType = {
   currentUser: User | null;
-  setCurrentUser: (user: User) => void;
+  setCurrentUser: (user: User | null) => void;
   isAdmin: boolean;
   isAgent: boolean;
   isEndUser: boolean;
+  isLoading: boolean;
 };
 
 const CurrentUserContext = createContext<CurrentUserContextType | undefined>(undefined);
 
 export function CurrentUserProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
 
   useEffect(() => {
-    // In a real app, you'd fetch this from an auth session.
-    // For this prototype, we get the current user from localStorage to persist the
-    // session across reloads. If no user is in localStorage, we default to the
-    // first user with the 'Admin' role from our mock data file. This simulates
-    // the initial, securely-created admin user that would exist in a production database.
-    const storedUserId = localStorage.getItem("currentUser");
-    const initialUser = users.find(u => u.id === storedUserId) || users.find(u => u.role === 'Admin');
-    if (initialUser) {
-      setCurrentUser(initialUser);
+    const fetchUser = async () => {
+        setIsLoading(true);
+        const storedUserId = localStorage.getItem("currentUser");
+        if (storedUserId) {
+            try {
+                // In a real app, you'd also verify the user's session/token with a backend.
+                const user = await getUserById(storedUserId);
+                setCurrentUser(user);
+            } catch (error) {
+                console.error("Failed to fetch user:", error);
+                localStorage.removeItem("currentUser"); // Clear invalid stored user
+                setCurrentUser(null);
+            }
+        } else {
+            setCurrentUser(null);
+        }
+        setIsLoading(false);
     }
+    fetchUser();
   }, []);
 
-  const handleSetCurrentUser = (user: User) => {
-    setCurrentUser(user);
-    localStorage.setItem("currentUser", user.id);
-     // Force a re-render by reloading the page
-    window.location.reload();
+  const handleSetCurrentUser = (user: User | null) => {
+    if (user) {
+        setCurrentUser(user);
+        localStorage.setItem("currentUser", user.id);
+        router.push('/dashboard');
+    } else {
+        setCurrentUser(null);
+        localStorage.removeItem("currentUser");
+        router.push('/login');
+    }
   };
 
   const isAdmin = currentUser?.role === 'Admin';
@@ -42,7 +62,7 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
   const isEndUser = currentUser?.role === 'End User';
 
   return (
-    <CurrentUserContext.Provider value={{ currentUser, setCurrentUser: handleSetCurrentUser, isAdmin, isAgent, isEndUser }}>
+    <CurrentUserContext.Provider value={{ currentUser, setCurrentUser: handleSetCurrentUser, isAdmin, isAgent, isEndUser, isLoading }}>
       {children}
     </CurrentUserContext.Provider>
   );

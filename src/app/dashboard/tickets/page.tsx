@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PlusCircle, Search } from 'lucide-react';
 
@@ -20,16 +21,29 @@ import {
 } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import TicketList from '@/components/ticket-list';
-import { tickets, Ticket } from '@/lib/data';
+import { getTickets, Ticket } from '@/lib/data';
 import { useCurrentUser } from '@/hooks/use-current-user.tsx';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AllTicketsPage() {
-  const { currentUser, isEndUser } = useCurrentUser();
+  const { currentUser, isEndUser, isLoading: isUserLoading } = useCurrentUser();
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<Ticket['status'] | 'All'>('All');
 
+  useEffect(() => {
+    if (!isUserLoading) {
+        setIsLoading(true);
+        getTickets().then(fetchedTickets => {
+            setTickets(fetchedTickets);
+            setIsLoading(false);
+        });
+    }
+  }, [isUserLoading])
+
   const ticketsToShow = isEndUser
-    ? tickets.filter(ticket => ticket.requester.id === currentUser?.id)
+    ? tickets.filter(ticket => ticket.requesterId === currentUser?.id)
     : tickets;
 
   const filteredTickets = ticketsToShow
@@ -51,6 +65,19 @@ export default function AllTicketsPage() {
    const closedTickets = filteredTickets.filter(
     (ticket) => ticket.status === "Closed"
   );
+
+  const renderTicketList = (ticketData: any[]) => {
+    if (isLoading) {
+        return (
+            <div className="p-6">
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        );
+    }
+    return <TicketList tickets={ticketData} />;
+  }
 
 
   return (
@@ -102,19 +129,19 @@ export default function AllTicketsPage() {
                 </TabsList>
             </div>
             <TabsContent value="All" className="m-0">
-              <TicketList tickets={filteredTickets} />
+              {renderTicketList(filteredTickets)}
             </TabsContent>
             <TabsContent value="Open" className="m-0">
-              <TicketList tickets={openTickets} />
+              {renderTicketList(openTickets)}
             </TabsContent>
             <TabsContent value="In Progress" className="m-0">
-              <TicketList tickets={inProgressTickets} />
+              {renderTicketList(inProgressTickets)}
             </TabsContent>
             <TabsContent value="Resolved" className="m-0">
-              <TicketList tickets={resolvedTickets} />
+              {renderTicketList(resolvedTickets)}
             </TabsContent>
              <TabsContent value="Closed" className="m-0">
-              <TicketList tickets={closedTickets} />
+              {renderTicketList(closedTickets)}
             </TabsContent>
           </Tabs>
         </CardContent>

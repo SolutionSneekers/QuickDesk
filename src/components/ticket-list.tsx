@@ -1,15 +1,17 @@
+
 import {
   Table,
   TableBody,
   TableHead,
   TableHeader,
   TableRow,
+  TableCell
 } from "@/components/ui/table";
 import { Ticket } from "@/lib/data";
 import TicketListItem from "./ticket-list-item";
 
 interface TicketListProps {
-  tickets: Ticket[];
+  tickets: any[]; // Using any because the shape will be enriched
 }
 
 export default function TicketList({ tickets }: TicketListProps) {
@@ -25,9 +27,17 @@ export default function TicketList({ tickets }: TicketListProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {tickets.map((ticket) => (
-          <TicketListItem key={ticket.id} ticket={ticket} />
-        ))}
+        {tickets.length > 0 ? (
+            tickets.map((ticket) => (
+              <TicketListItem key={ticket.id} ticket={ticket} />
+            ))
+        ) : (
+            <TableRow>
+                <TableCell colSpan={5} className="text-center h-24">
+                    No tickets found.
+                </TableCell>
+            </TableRow>
+        )}
       </TableBody>
     </Table>
   );

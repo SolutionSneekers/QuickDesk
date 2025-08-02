@@ -1,33 +1,72 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { users as initialUsers, User } from "@/lib/data";
+import { User, getUsers, addUser, updateUser, deleteUser } from "@/lib/data";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { UserDialog } from "./components/user-dialog";
 import { DeleteUserDialog } from "./components/delete-user-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function AdminUsersPage() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [users, setUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const { toast } = useToast();
 
-    const handleAddUser = (user: User) => {
-        setUsers(prev => [...prev, { ...user, id: `user-${Date.now()}` }]);
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const fetchedUsers = await getUsers();
+            setUsers(fetchedUsers);
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch users." });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleUpdateUser = (user: User) => {
-        setUsers(prev => prev.map(u => u.id === user.id ? user : u));
+    const handleSaveUser = async (user: Omit<User, 'id'> | User) => {
+        try {
+             if ('id' in user && user.id) {
+                // Update existing user
+                await updateUser(user.id, { name: user.name, email: user.email, role: user.role });
+                toast({ title: "Success", description: "User updated successfully." });
+            } else {
+                // Add new user
+                await addUser({ name: user.name, email: user.email, role: user.role, avatar: `https://i.pravatar.cc/150?u=${user.email}` });
+                toast({ title: "Success", description: "User added successfully." });
+            }
+            fetchUsers();
+        } catch (error) {
+             toast({ variant: "destructive", title: "Error", description: "Could not save user." });
+        } finally {
+            setIsUserDialogOpen(false);
+            setSelectedUser(null);
+        }
     };
-
-    const handleDeleteUser = (userId: string) => {
-        setUsers(prev => prev.filter(u => u.id !== userId));
+    
+    const handleDeleteUser = async (userId: string) => {
+        try {
+            await deleteUser(userId);
+            fetchUsers();
+            toast({ title: "Success", description: "User deleted successfully." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not delete user." });
+        }
     };
 
     return (
@@ -56,7 +95,23 @@ export default function AdminUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map(user => (
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-4">
+                                            <Skeleton className="h-10 w-10 rounded-full" />
+                                            <div>
+                                                <Skeleton className="h-4 w-24 mb-1" />
+                                                <Skeleton className="h-3 w-32" />
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                                </TableRow>
+                                ))
+                            ) : users.map(user => (
                                 <TableRow key={user.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-4">
@@ -101,7 +156,7 @@ export default function AdminUsersPage() {
                 isOpen={isUserDialogOpen}
                 setIsOpen={setIsUserDialogOpen}
                 user={selectedUser}
-                onSave={selectedUser ? handleUpdateUser : handleAddUser}
+                onSave={handleSaveUser}
             />
 
             <DeleteUserDialog

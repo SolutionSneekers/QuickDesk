@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,7 @@ import { Ticket } from "@/lib/data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function AIReplySuggester({ ticket }: { ticket: Ticket }) {
+export default function AIReplySuggester({ ticket }: { ticket: any }) {
   const [suggestion, setSuggestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -19,8 +20,8 @@ export default function AIReplySuggester({ ticket }: { ticket: Ticket }) {
     setIsLoading(true);
     setSuggestion("");
     try {
-      const customerMessages = ticket.comments.filter(c => !c.isAgent);
-      const agentMessages = ticket.comments.filter(c => c.isAgent).map(c => c.content);
+      const customerMessages = ticket.comments?.filter((c: any) => !c.isAgent) || [];
+      const agentMessages = ticket.comments?.filter((c: any) => c.isAgent).map((c: any) => c.content) || [];
 
       const input: SuggestReplyInput = {
         ticketDescription: ticket.description,

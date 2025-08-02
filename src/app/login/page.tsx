@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +13,48 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
-import { users } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";
+import { getUsers, User } from "@/lib/data";
+import { useEffect, useState } from "react";
+import { useCurrentUser } from "@/hooks/use-current-user.tsx";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const sampleAdmin = users.find(u => u.role === 'Admin');
-  const sampleAgent = users.find(u => u.role === 'Support Agent');
-  const sampleUser = users.find(u => u.role === 'End User');
+  const [email, setEmail] = useState('eve@quickdesk.com');
+  const [password, setPassword] = useState('password');
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const { setCurrentUser } = useCurrentUser();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      const users = await getUsers();
+      setAllUsers(users);
+    };
+    fetchAllUsers();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // This is a mock authentication. In a real app, you'd send the email and
+    // password to a server to be verified.
+    const user = allUsers.find(u => u.email === email);
+
+    if (user && password === 'password') {
+        setCurrentUser(user);
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: "Invalid email or password. The password for all test users is 'password'.",
+        });
+    }
+  };
+
+
+  const sampleAdmin = allUsers.find(u => u.role === 'Admin');
+  const sampleAgent = allUsers.find(u => u.role === 'Support Agent');
+  const sampleUser = allUsers.find(u => u.role === 'End User');
 
 
   return (
@@ -36,7 +73,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
+            <form onSubmit={handleLogin} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -44,7 +81,8 @@ export default function LoginPage() {
                   type="email"
                   placeholder="m@example.com"
                   required
-                  defaultValue="eve@quickdesk.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -57,12 +95,12 @@ export default function LoginPage() {
                     Forgot your password?
                   </Link>
                 </div>
-                <Input id="password" type="password" required defaultValue="password" />
+                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full" asChild>
-                <Link href="/dashboard">Sign in</Link>
+              <Button type="submit" className="w-full">
+                Sign in
               </Button>
-            </div>
+            </form>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link href="#" className="underline">
@@ -96,6 +134,9 @@ export default function LoginPage() {
                         <p className="text-muted-foreground">Email: {sampleUser.email}</p>
                     </div>
                 )}
+                 {allUsers.length === 0 && (
+                    <p className="text-muted-foreground">Loading sample users...</p>
+                 )}
             </CardContent>
         </Card>
       </div>

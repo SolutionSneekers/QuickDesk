@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -11,7 +12,8 @@ import { format } from "date-fns";
 import TicketStatusBadge from "@/components/ticket-status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function TicketDetails({ ticket }: { ticket: Ticket }) {
+export default function TicketDetails({ ticket }: { ticket: any }) {
+  // The ticket prop will be enriched with full user/category objects
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -31,7 +33,7 @@ export default function TicketDetails({ ticket }: { ticket: Ticket }) {
                 </div>
                  <div>
                     <p className="font-medium">Category</p>
-                    <p className="text-muted-foreground">{ticket.category.name}</p>
+                    <p className="text-muted-foreground">{ticket.category?.name || 'N/A'}</p>
                 </div>
                  <div>
                     <p className="font-medium">Created</p>
@@ -45,16 +47,18 @@ export default function TicketDetails({ ticket }: { ticket: Ticket }) {
             <Separator />
             <div className="space-y-2 text-sm">
                 <p className="font-medium">Requester</p>
-                <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={ticket.requester.avatar} />
-                        <AvatarFallback>{ticket.requester.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <p>{ticket.requester.name}</p>
-                        <p className="text-xs text-muted-foreground">{ticket.requester.email}</p>
+                 {ticket.requester ? (
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={ticket.requester.avatar} />
+                            <AvatarFallback>{ticket.requester.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p>{ticket.requester.name}</p>
+                            <p className="text-xs text-muted-foreground">{ticket.requester.email}</p>
+                        </div>
                     </div>
-                </div>
+                 ): <p className="text-muted-foreground">Loading...</p>}
             </div>
             <div className="space-y-2 text-sm">
                 <p className="font-medium">Assignee</p>
