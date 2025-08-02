@@ -20,20 +20,19 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { setCurrentUser } = useCurrentUser();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would use Firebase Auth.
-    // For this prototype, we're checking the password locally
-    // but looking up the user in the live Firestore database.
-    if (password !== 'password') {
+    // This is a temporary login flow for the prototype.
+    // In a real app, you would use Firebase Authentication.
+
+    if (!email) {
         toast({
             variant: "destructive",
             title: "Login Failed",
-            description: "Invalid email or password. The password for all test users is 'password'.",
+            description: "Please enter an email address.",
         });
         return;
     }
@@ -71,7 +70,7 @@ export default function LoginPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account.
+              Enter your email to sign into your account.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -86,18 +85,6 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <Button type="submit" className="w-full">
                 Sign in
