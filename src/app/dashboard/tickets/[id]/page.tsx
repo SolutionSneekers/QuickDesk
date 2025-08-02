@@ -10,7 +10,7 @@ import { tickets } from "@/lib/data";
 import { notFound } from "next/navigation";
 import TicketDetails from "./components/ticket-details";
 import TicketConversation from "./components/ticket-conversation";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 
 export default function TicketDetailPage({ params }: { params: { id: string } }) {
   const { isEndUser } = useCurrentUser();

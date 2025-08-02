@@ -15,7 +15,7 @@ import {
   Tags,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { useCurrentUser } from '@/hooks/use-current-user.tsx';
 
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();

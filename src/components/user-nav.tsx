@@ -16,7 +16,7 @@ import {
 import { users } from "@/lib/data";
 import Link from "next/link";
 import { LogOut, User, Settings, Check } from "lucide-react";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import React from "react";
 
 export function UserNav() {

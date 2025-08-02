@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import TicketList from '@/components/ticket-list';
 import { tickets, Ticket } from '@/lib/data';
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { useCurrentUser } from '@/hooks/use-current-user.tsx';
 
 export default function AllTicketsPage() {
   const { currentUser, isEndUser } = useCurrentUser();

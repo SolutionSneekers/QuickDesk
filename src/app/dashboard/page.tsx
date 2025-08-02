@@ -21,7 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Activity, Clock, Star, Ticket } from 'lucide-react';
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { useCurrentUser } from '@/hooks/use-current-user.tsx';
 
 export default function DashboardPage() {
   const { currentUser, isEndUser } = useCurrentUser();

@@ -13,7 +13,7 @@ import Logo from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { UserNav } from "@/components/user-nav";
 import { MainNav } from "@/components/main-nav";
-import { CurrentUserProvider } from "@/hooks/use-current-user";
+import { CurrentUserProvider } from "@/hooks/use-current-user.tsx";
 
 export default function DashboardLayout({
   children,
