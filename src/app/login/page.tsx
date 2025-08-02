@@ -13,8 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
-import { Separator } from "@/components/ui/separator";
-import { getUsers, User } from "@/lib/data";
+import { getUsers, User, getUserByEmail } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user.tsx";
 import { useToast } from "@/hooks/use-toast";
@@ -22,39 +21,57 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const [email, setEmail] = useState('eve@quickdesk.com');
   const [password, setPassword] = useState('password');
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [sampleUsers, setSampleUsers] = useState<User[]>([]);
   const { setCurrentUser } = useCurrentUser();
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchAllUsers = async () => {
+    // Fetch a few users to display as examples on the login page
+    const fetchSampleUsers = async () => {
       const users = await getUsers();
-      setAllUsers(users);
+      setSampleUsers(users.slice(0, 3));
     };
-    fetchAllUsers();
+    fetchSampleUsers();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a mock authentication. In a real app, you'd send the email and
-    // password to a server to be verified.
-    const user = allUsers.find(u => u.email === email);
-
-    if (user && password === 'password') {
-        setCurrentUser(user);
-    } else {
+    // In a real app, you would use Firebase Auth.
+    // For this prototype, we're checking the password locally
+    // but looking up the user in the live Firestore database.
+    if (password !== 'password') {
         toast({
             variant: "destructive",
             title: "Login Failed",
             description: "Invalid email or password. The password for all test users is 'password'.",
         });
+        return;
+    }
+
+    try {
+        const user = await getUserByEmail(email);
+        if (user) {
+            setCurrentUser(user);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Login Failed",
+                description: "No user found with that email address.",
+            });
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        toast({
+            variant: "destructive",
+            title: "Login Error",
+            description: "An error occurred while trying to log in.",
+        });
     }
   };
 
-
-  const sampleAdmin = allUsers.find(u => u.role === 'Admin');
-  const sampleAgent = allUsers.find(u => u.role === 'Support Agent');
-  const sampleUser = allUsers.find(u => u.role === 'End User');
+  const sampleAdmin = sampleUsers.find(u => u.role === 'Admin');
+  const sampleAgent = sampleUsers.find(u => u.role === 'Support Agent');
+  const sampleUser = sampleUsers.find(u => u.role === 'End User');
 
 
   return (
@@ -113,7 +130,7 @@ export default function LoginPage() {
         <Card className="mt-4">
             <CardHeader>
                 <CardTitle className="text-lg font-medium">Sample Users for Testing</CardTitle>
-                <CardDescription>Use the user switcher in the dashboard header to change roles. The password for all users is `password`.</CardDescription>
+                <CardDescription>The password for all users is `password`.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
                 {sampleAdmin && (
@@ -134,7 +151,7 @@ export default function LoginPage() {
                         <p className="text-muted-foreground">Email: {sampleUser.email}</p>
                     </div>
                 )}
-                 {allUsers.length === 0 && (
+                 {sampleUsers.length === 0 && (
                     <p className="text-muted-foreground">Loading sample users...</p>
                  )}
             </CardContent>
